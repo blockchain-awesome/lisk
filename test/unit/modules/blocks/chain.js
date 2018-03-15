@@ -452,6 +452,8 @@ describe('blocks/chain', () => {
 					recipientId: account.address,
 				}
 			);
+			transaction.fee = Number(transaction.fee);
+			transaction.amount = Number(transaction.amount);
 			transaction.senderId = accountFixtures.genesis.address;
 			return transactions.push(transaction);
 		});
