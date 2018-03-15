@@ -103,7 +103,7 @@ Rounds.prototype.flush = function(round, cb) {
  * @param {function} done - Callback function
  * @returns {function} Calling done with error if any
  */
-Rounds.prototype.backwardTick = function(block, previousBlock, done) {
+Rounds.prototype.backwardTick = function(block, previousBlock, done, tx) {
 	var round = slots.calcRound(block.height);
 	var prevRound = slots.calcRound(previousBlock.height);
 	var nextRound = slots.calcRound(block.height + 1);
@@ -136,7 +136,7 @@ Rounds.prototype.backwardTick = function(block, previousBlock, done) {
 
 		return promised.mergeBlockGenerator().then(() => {
 			if (scope.finishRound) {
-				return promised.backwardLand().then(() => promised.markBlockId());
+				return promised.backwardLand().then(promised.markBlockId);
 			}
 			return promised.markBlockId();
 		});
@@ -150,21 +150,21 @@ Rounds.prototype.backwardTick = function(block, previousBlock, done) {
 
 				// Sum round if finishing round
 				if (scope.finishRound) {
-					return __private.sumRound(scope, cb);
+					return __private.sumRound(scope, cb, tx);
 				}
 				return setImmediate(cb);
 			},
 			function(cb) {
 				// Get outsiders if finishing round
 				if (scope.finishRound) {
-					return __private.getOutsiders(scope, cb);
+					return __private.getOutsiders(scope, cb, tx);
 				}
 				return setImmediate(cb);
 			},
 			function(cb) {
 				// Perform round tick
-				library.db
-					.tx(BackwardTick)
+				(tx || library.db)
+					.task(BackwardTick)
 					.then(() => setImmediate(cb))
 					.catch(err => {
 						library.logger.error(err.stack);
